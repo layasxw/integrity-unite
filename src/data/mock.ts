@@ -1,0 +1,232 @@
+// Мок-данные. Когда бэкенд будет готов, эти константы можно заменить
+// на fetch-запросы с тем же форматом полей — компоненты не изменятся.
+// Каждый блок помечен TODO(backend) с предполагаемым источником данных.
+
+// TODO(backend): статичные цифры проекта — можно захардкодить в CMS/конфиге
+// или отдавать через GET /api/stats, если планируется автообновление.
+export const stats = [
+  { label: "Проект работает с", value: "30.01.2024" },
+  { label: "Проведено потоков", value: "7" },
+  { label: "Длительность потока", value: "3 месяца" },
+  { label: "Проведено уроков", value: "11 500" },
+  { label: "Волонтёров за всё время", value: "700+" },
+  { label: "Координаторов", value: "94" },
+  { label: "Менеджеров", value: "20" },
+];
+
+// TODO(backend): список стран волонтёров — статика, но если хотите считать
+// его от реальных анкет волонтёров, нужен GET /api/volunteers/countries.
+export const volunteerCountries = [
+  "Казахстан",
+  "Узбекистан",
+  "Беларусь",
+  "Украина",
+  "Россия",
+  "Кыргызстан",
+  "США",
+  "Азербайджан",
+  "Китай",
+  "Германия",
+  "Монголия",
+  "Чехия",
+];
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  // Путь к фото в public/images/team/, например "/images/team/diana.jpg".
+  // Если не указан — рендерится кружок с первой буквой имени.
+  photo?: string;
+}
+
+// TODO(backend): основатели/команда меняются редко — можно оставить статикой
+// в коде, но если нужна админка (добавлять координаторов, менеджеров и т.д.),
+// добавить GET /api/team + CRUD для админки.
+//
+// Чтобы добавить человека: положи фото в public/images/team/<id>.jpg
+// и добавь объект { id, name, role, photo: "/images/team/<id>.jpg" } ниже.
+export const team: TeamMember[] = [
+  {
+    id: "diana",
+    name: "Диана",
+    role: "Основательница Integrity Unite",
+  },
+  {
+    id: "polina",
+    name: "Полина",
+    role: "Соосновательница Integrity Unite",
+  },
+];
+
+export interface Club {
+  id: string;
+  name: string;
+  description: string;
+}
+
+// TODO(backend): клубы создают сами волонтёры («основать свой клуб» в ТЗ) —
+// нужны CRUD-эндпоинты, например GET/POST /api/clubs, плюс модерация.
+export const clubs: Club[] = [
+  {
+    id: "debate",
+    name: "Дебатный клуб",
+    description: "Отработка аргументации, публичных выступлений и критического мышления на регулярных дебатных сессиях.",
+  },
+  {
+    id: "ielts",
+    name: "IELTS-клуб",
+    description: "Подготовка к международному экзамену вместе с другими волонтёрами и менторами.",
+  },
+  {
+    id: "research",
+    name: "Research-клуб",
+    description: "Совместная работа над исследовательскими проектами и статьями для публикации.",
+  },
+];
+
+export interface Publication {
+  id: string;
+  title: string;
+  author: string;
+  category: string;
+  excerpt: string;
+  date: string;
+  url?: string;
+}
+
+// TODO(backend): раздел "Публикации" из ТЗ — нужны форма подачи, хранение
+// (файл/текст + метаданные) и админ-панель для модерации перед публикацией.
+// Ожидаемые эндпоинты: GET /api/publications, POST /api/publications (черновик),
+// PATCH /api/publications/:id (одобрение/отклонение админом).
+export const publications: Publication[] = [
+  {
+    id: "pub-1",
+    title: "Как организовать волонтёрский проект в своей школе",
+    author: "Полина Ханчина",
+    category: "Практическое руководство",
+    excerpt:
+      "Пошаговый разбор запуска локальной инициативы: от идеи и команды до первых мероприятий и обратной связи.",
+    date: "2026-03-12",
+  },
+  {
+    id: "pub-2",
+    title: "Опыт онлайн-обучения детей из малообеспеченных семей: сравнение подходов",
+    author: "Диана",
+    category: "Аналитический обзор",
+    excerpt:
+      "Сравнение форматов дистанционного образования в разных странах и то, что из этого можно применить в волонтёрских проектах.",
+    date: "2026-01-20",
+  },
+  {
+    id: "pub-3",
+    title: "Что мне дало волонтёрство: год в Integrity Unite",
+    author: "Волонтёр 5-го потока",
+    category: "Эссе",
+    excerpt: "Личные размышления о том, как преподавание другим меняет собственный взгляд на образование.",
+    date: "2025-11-02",
+  },
+];
+
+export interface Review {
+  id: string;
+  name: string;
+  role: "Волонтёр" | "Родитель" | "Ученик" | "Партнёр";
+  text: string;
+  date: string;
+}
+
+// TODO(backend): раздел "Отзывы" — открытый вопрос из ТЗ: может ли отзыв
+// оставить любой посетитель сайта или только по заявке. В любом случае
+// нужна модерация перед публикацией. Ожидаемые эндпоинты:
+// GET /api/reviews (только approved), POST /api/reviews (на модерацию),
+// PATCH /api/reviews/:id (approve/reject в админке).
+export const reviews: Review[] = [
+  {
+    id: "rev-1",
+    name: "Айгерим С.",
+    role: "Родитель",
+    text: "Сын занимается уже второй поток подряд — очень довольны отношением волонтёров и тем, что всё бесплатно.",
+    date: "2026-02-01",
+  },
+  {
+    id: "rev-2",
+    name: "Тимур К.",
+    role: "Волонтёр",
+    text: "Провёл здесь первые уроки в жизни и получил сертификат, который потом пригодился при поступлении.",
+    date: "2025-12-15",
+  },
+  {
+    id: "rev-3",
+    name: "Алина Ж.",
+    role: "Ученик",
+    text: "Мне нравится, что можно спросить что угодно и преподаватель объяснит ещё раз, не торопя.",
+    date: "2025-10-22",
+  },
+];
+
+export interface TopVolunteer {
+  id: string;
+  name: string;
+  cohort: string;
+  award: string;
+  description: string;
+}
+
+// TODO(backend): "Лучшие волонтёры" — по ТЗ админка добавляет имя, фото,
+// поток, награду, описание вручную. Нужны GET /api/top-volunteers и
+// админ-эндпоинты для CRUD + хранение фото (например, через S3/CDN).
+export const topVolunteers: TopVolunteer[] = [
+  {
+    id: "top-1",
+    name: "Полина Ханчина",
+    cohort: "Поток 1—7",
+    award: "Best International Volunteer",
+    description: "Соучредитель проекта, провела десятки уроков и менторских сессий по подготовке к IELTS.",
+  },
+  {
+    id: "top-2",
+    name: "Диана",
+    cohort: "Поток 1—7",
+    award: "Best National Volunteer",
+    description: "Организатор проекта, отвечает за координацию потоков и работу с командой.",
+  },
+];
+
+export interface Branch {
+  id: string;
+  city: string;
+  lead: string;
+  volunteers: number;
+}
+
+// TODO(backend): филиалы появляются по заявкам через branchForm ниже —
+// нужна админка, куда координатор вносит открытый филиал и его главу,
+// например GET/POST /api/branches.
+export const branches: Branch[] = [
+  { id: "br-1", city: "Алматы", lead: "в поиске главы филиала", volunteers: 0 },
+  { id: "br-2", city: "Астана", lead: "в поиске главы филиала", volunteers: 0 },
+];
+
+// TODO(backend): расписание потоков — если даты фиксированы надолго, можно
+// оставить статикой в коде; если график часто меняется, вынести в
+// GET /api/cohorts, чтобы обновлять без деплоя фронта.
+export const cohortSchedule = [
+  { id: "c1", name: "Поток 1", period: "янв 2024 — апр 2024" },
+  { id: "c2", name: "Поток 2", period: "апр 2024 — июль 2024" },
+  { id: "c3", name: "Поток 3", period: "июль 2024 — окт 2024" },
+  { id: "c4", name: "Поток 4", period: "окт 2024 — янв 2025" },
+  { id: "c5", name: "Поток 5", period: "янв 2025 — апр 2025" },
+  { id: "c6", name: "Поток 6", period: "апр 2025 — июль 2025" },
+  { id: "c7", name: "Поток 7", period: "июль 2025 — окт 2025" },
+  { id: "c8", name: "Поток 8 (набор открыт)", period: "старт 10 июля" },
+];
+
+// Настоящие рабочие ссылки на Google-формы и почту — не мок-данные,
+// менять не нужно, пока команда не решит перейти на свои формы с бэкендом.
+export const links = {
+  volunteerForm: "https://forms.gle/VW68RK5AJg79XDch8",
+  branchForm: "https://forms.gle/zZkAC7GrxwmJKgm79",
+  publicationForm: "https://forms.gle/SeXdn1A4x6VeCRqk6",
+  contactEmail: "hanchina.polina@gmail.com",
+};

@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", "Segoe UI", system-ui, sans-serif;
+
+  --color-navy: #1e2249;
+  --color-navy-light: #2b3166;
+  --color-mint: #99e2b4;
+  --color-mint-dark: #6fcf97;
+  --color-yellow: #ffd166;
+  --color-offwhite: #f0f4f8;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-offwhite);
+  color: var(--color-navy);
+}
