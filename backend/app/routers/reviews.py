@@ -1,71 +1,80 @@
-"""
-GET   /api/reviews         — approved reviews (public)
-POST  /api/reviews         — submit a review (goes to pending)
-PATCH /api/reviews/{id}    — approve or reject (admin)
-TODO(db): swap in-memory store with DB queries
-"""
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.schemas import ReviewCreate, ReviewRead, MessageResponse
+from app.database import get_db
+from app.models import ReviewModel
 
 router = APIRouter(prefix="/api/reviews", tags=["Reviews"])
 
-# ── Seed data (mock until DB is connected) ─────────────────────────────────────
-_store: list[ReviewRead] = [
-    ReviewRead(
-        id="rev-1", name="Айгерим С.", role="Родитель",
-        text="Сын занимается уже второй поток подряд — очень довольны.",
-        status="approved", date="2026-02-01",
-    ),
-    ReviewRead(
-        id="rev-2", name="Тимур К.", role="Волонтёр",
-        text="Провёл здесь первые уроки в жизни и получил сертификат.",
-        status="approved", date="2025-12-15",
-    ),
-    ReviewRead(
-        id="rev-3", name="Алина Ж.", role="Ученик",
-        text="Мне нравится, что можно спросить что угодно.",
-        status="approved", date="2025-10-22",
-    ),
-]
-
 
 @router.get("", response_model=list[ReviewRead])
-async def list_reviews():
+async def list_reviews(status: Optional[str] = None, db: AsyncSession = Depends(get_db)):
     """
-    Public: return only approved reviews.
-    TODO(db): SELECT * FROM reviews WHERE status='approved' ORDER BY date DESC
+    Public: return approved reviews by default.
+    Admin: if status='all' or status='pending', returns matching reviews.
     """
-    return [r for r in _store if r.status == "approved"]
+    query = select(ReviewModel)
+    if status == "all":
+        query = query.order_by(ReviewModel.date.desc())
+    elif status:
+        query = query.where(ReviewModel.status == status).order_by(ReviewModel.date.desc())
+    else:
+        query = query.where(ReviewModel.status == "approved").order_by(ReviewModel.date.desc())
+
+    result = await db.execute(query)
+    revs = result.scalars().all()
+    return [
+        ReviewRead(
+            id=r.id,
+            name=r.name,
+            role=r.role,
+            text=r.text,
+            status=r.status,
+            date=r.date,
+        )
+        for r in revs
+    ]
 
 
 @router.post("", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-async def submit_review(body: ReviewCreate):
-    """
-    Public: submit a review; goes into 'pending' until an admin approves it.
-    TODO(db): INSERT INTO reviews (...) VALUES (...) with status='pending'
-    """
-    new = ReviewRead(
+async def submit_review(body: ReviewCreate, db: AsyncSession = Depends(get_db)):
+    """Public: submit a review; goes into 'pending' until an admin approves it."""
+    new_rev = ReviewModel(
         id=str(uuid.uuid4()),
+        name=body.name,
+        role=body.role,
+        text=body.text,
         status="pending",
         date=datetime.now(timezone.utc).date().isoformat(),
-        **body.model_dump(),
     )
-    _store.append(new)
+    db.add(new_rev)
+    await db.commit()
     return MessageResponse(message="Спасибо за отзыв! Он появится после модерации.")
 
 
 @router.patch("/{review_id}", response_model=ReviewRead)
-async def moderate_review(review_id: str, action: str):
-    """
-    Admin: approve or reject a review. action = 'approve' | 'reject'
-    TODO(db): UPDATE reviews SET status=:action WHERE id=:id
-    """
-    review = next((r for r in _store if r.id == review_id), None)
-    if not review:
-        raise HTTPException(status_code=404, detail="Review not found")
+async def moderate_review(review_id: str, action: str, db: AsyncSession = Depends(get_db)):
+    """Admin: approve or reject a review. action = 'approve' | 'reject'"""
     if action not in ("approve", "reject"):
         raise HTTPException(status_code=400, detail="action must be 'approve' or 'reject'")
+
+    result = await db.execute(select(ReviewModel).where(ReviewModel.id == review_id))
+    review = result.scalar_one_or_none()
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+
     review.status = "approved" if action == "approve" else "rejected"
-    return review
+    await db.commit()
+    await db.refresh(review)
+    return ReviewRead(
+        id=review.id,
+        name=review.name,
+        role=review.role,
+        text=review.text,
+        status=review.status,
+        date=review.date,
+    )

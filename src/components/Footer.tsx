@@ -34,9 +34,13 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-offwhite/10 pt-6 text-xs">
-          © {new Date().getFullYear()} Integrity Unite. Проект работает с 30.01.2024.
+        <div className="mt-12 flex items-center justify-between border-t border-offwhite/10 pt-6 text-xs">
+          <span>© {new Date().getFullYear()} Integrity Unite. Проект работает с 30.01.2024.</span>
+          <Link to="/admin" className="hover:text-mint transition-colors">
+            Панель администратора
+          </Link>
         </div>
+
       </Container>
     </footer>
   );

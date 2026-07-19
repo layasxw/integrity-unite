@@ -1,73 +1,75 @@
-"""
-GET   /api/publications        — published articles (public)
-POST  /api/publications        — submit article draft
-PATCH /api/publications/{id}   — approve / reject (admin)
-TODO(db): swap in-memory store with DB queries
-"""
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.schemas import PublicationCreate, PublicationRead, MessageResponse
+from app.database import get_db
+from app.models import PublicationModel
 
 router = APIRouter(prefix="/api/publications", tags=["Publications"])
 
-_store: list[PublicationRead] = [
-    PublicationRead(
-        id="pub-1",
-        title="Как организовать волонтёрский проект в своей школе",
-        author="Полина Ханчина",
-        category="Практическое руководство",
-        excerpt="Пошаговый разбор запуска локальной инициативы.",
-        status="published",
-        date="2026-03-12",
-    ),
-    PublicationRead(
-        id="pub-2",
-        title="Опыт онлайн-обучения детей из малообеспеченных семей",
-        author="Диана",
-        category="Аналитический обзор",
-        excerpt="Сравнение форматов дистанционного образования.",
-        status="published",
-        date="2026-01-20",
-    ),
-]
-
 
 @router.get("", response_model=list[PublicationRead])
-async def list_publications():
-    """
-    Public: return published articles.
-    TODO(db): SELECT * FROM publications WHERE status='published' ORDER BY date DESC
-    """
-    return [p for p in _store if p.status == "published"]
+async def list_publications(db: AsyncSession = Depends(get_db)):
+    """Public: return published articles."""
+    query = select(PublicationModel).where(PublicationModel.status == "published").order_by(PublicationModel.date.desc())
+    result = await db.execute(query)
+    pubs = result.scalars().all()
+    return [
+        PublicationRead(
+            id=p.id,
+            title=p.title,
+            author=p.author,
+            category=p.category,
+            excerpt=p.excerpt,
+            content=p.content,
+            status=p.status,
+            date=p.date,
+        )
+        for p in pubs
+    ]
 
 
 @router.post("", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-async def submit_publication(body: PublicationCreate):
-    """
-    Public: submit article for review.
-    TODO(db): INSERT INTO publications (...) with status='draft'
-    """
-    new = PublicationRead(
+async def submit_publication(body: PublicationCreate, db: AsyncSession = Depends(get_db)):
+    """Public: submit article for review."""
+    new_pub = PublicationModel(
         id=str(uuid.uuid4()),
+        title=body.title,
+        author=body.author,
+        category=body.category,
+        excerpt=body.excerpt,
+        content=body.content,
         status="draft",
         date=datetime.now(timezone.utc).date().isoformat(),
-        **body.model_dump(),
     )
-    _store.append(new)
+    db.add(new_pub)
+    await db.commit()
     return MessageResponse(message="Статья отправлена на модерацию. Спасибо!")
 
 
 @router.patch("/{pub_id}", response_model=PublicationRead)
-async def moderate_publication(pub_id: str, action: str):
-    """
-    Admin: publish or reject an article draft.
-    TODO(db): UPDATE publications SET status=:status WHERE id=:id
-    """
-    pub = next((p for p in _store if p.id == pub_id), None)
-    if not pub:
-        raise HTTPException(status_code=404, detail="Publication not found")
+async def moderate_publication(pub_id: str, action: str, db: AsyncSession = Depends(get_db)):
+    """Admin: publish or reject an article draft."""
     if action not in ("publish", "reject"):
         raise HTTPException(status_code=400, detail="action must be 'publish' or 'reject'")
+
+    result = await db.execute(select(PublicationModel).where(PublicationModel.id == pub_id))
+    pub = result.scalar_one_or_none()
+    if not pub:
+        raise HTTPException(status_code=404, detail="Publication not found")
+
     pub.status = "published" if action == "publish" else "rejected"
-    return pub
+    await db.commit()
+    await db.refresh(pub)
+    return PublicationRead(
+        id=pub.id,
+        title=pub.title,
+        author=pub.author,
+        category=pub.category,
+        excerpt=pub.excerpt,
+        content=pub.content,
+        status=pub.status,
+        date=pub.date,
+    )

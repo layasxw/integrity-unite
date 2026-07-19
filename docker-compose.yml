@@ -12,37 +12,36 @@ services:
       - "8000:8000"
     env_file:
       - ./backend/.env
-    # Uncomment when DB is added:
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - app_network
 
-  # ── PostgreSQL (uncomment when ready) ────────────────────────────────────────
-  # db:
-  #   image: postgres:16-alpine
-  #   container_name: integrity_db
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_USER: integrity
-  #     POSTGRES_PASSWORD: changeme
-  #     POSTGRES_DB: integrity_unite
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U integrity"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   networks:
-  #     - app_network
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: integrity_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: integrity
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: integrity_unite
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U integrity"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app_network
 
 networks:
   app_network:
     driver: bridge
 
-# volumes:
-#   postgres_data:
+volumes:
+  postgres_data:
