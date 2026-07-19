@@ -3,7 +3,8 @@ import Container from "../components/ui/Container";
 import Button from "../components/ui/Button";
 import SectionTitle from "../components/ui/SectionTitle";
 import WorldMap from "../components/WorldMap";
-import { stats, volunteerCountries, links } from "../data/mock";
+import { useApiData } from "../hooks/useApiData";
+import { stats as statsFallback, volunteerCountries as countriesFallback, links } from "../data/mock";
 
 function ScrollCue() {
   return (
@@ -21,6 +22,9 @@ function ScrollCue() {
 }
 
 export default function Home() {
+  const stats = useApiData("/api/stats", statsFallback);
+  const volunteerCountries = useApiData("/api/volunteers/countries", countriesFallback);
+
   return (
     <div>
       <section className="relative flex min-h-[92svh] items-center overflow-hidden bg-navy">

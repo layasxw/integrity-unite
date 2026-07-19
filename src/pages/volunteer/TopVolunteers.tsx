@@ -1,8 +1,11 @@
 import PageHeader from "../../components/PageHeader";
 import Container from "../../components/ui/Container";
-import { topVolunteers } from "../../data/mock";
+import { useApiData } from "../../hooks/useApiData";
+import { topVolunteers as topVolunteersFallback } from "../../data/mock";
 
 export default function TopVolunteers() {
+  const topVolunteers = useApiData("/api/top-volunteers", topVolunteersFallback);
+
   return (
     <div>
       <PageHeader

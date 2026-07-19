@@ -1,11 +1,14 @@
 import PageHeader from "../components/PageHeader";
 import Container from "../components/ui/Container";
 import Button from "../components/ui/Button";
-import { cohortSchedule, links } from "../data/mock";
+import { useApiData } from "../hooks/useApiData";
+import { cohortSchedule as cohortsFallback, links } from "../data/mock";
 
 export default function Schedule() {
-  const pastCohorts = cohortSchedule.slice(0, -1);
-  const openCohort = cohortSchedule[cohortSchedule.length - 1];
+  const cohortSchedule = useApiData("/api/cohorts", cohortsFallback);
+  const pastCohorts = cohortSchedule.filter((c) => !c.is_active);
+  const openCohort =
+    cohortSchedule.find((c) => c.is_active) ?? cohortSchedule[cohortSchedule.length - 1];
 
   return (
     <div>

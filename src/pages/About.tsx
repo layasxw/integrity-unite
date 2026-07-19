@@ -2,9 +2,13 @@ import PageHeader from "../components/PageHeader";
 import Container from "../components/ui/Container";
 import SectionTitle from "../components/ui/SectionTitle";
 import WorldMap from "../components/WorldMap";
-import { stats, volunteerCountries } from "../data/mock";
+import { useApiData } from "../hooks/useApiData";
+import { stats as statsFallback, volunteerCountries as countriesFallback } from "../data/mock";
 
 export default function About() {
+  const stats = useApiData("/api/stats", statsFallback);
+  const volunteerCountries = useApiData("/api/volunteers/countries", countriesFallback);
+
   return (
     <div>
       <PageHeader

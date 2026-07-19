@@ -1,8 +1,11 @@
 import PageHeader from "../components/PageHeader";
 import Container from "../components/ui/Container";
-import { reviews } from "../data/mock";
+import { useApiData } from "../hooks/useApiData";
+import { reviews as reviewsFallback } from "../data/mock";
 
 export default function Reviews() {
+  const reviews = useApiData("/api/reviews", reviewsFallback);
+
   return (
     <div>
       <PageHeader
@@ -14,9 +17,9 @@ export default function Reviews() {
       <section className="py-24">
         <Container>
           <div className="rounded-2xl border border-mint-dark/40 bg-white p-5 text-sm text-navy/70 shadow-sm">
-            Форма отправки отзыва и модерация ещё не решены (нужно уточнить с командой:
-            может ли оставить отзыв любой посетитель сайта или только через модерацию). Ниже
-            — примеры отзывов на мок-данных.
+            Модерация на бэкенде уже готова (новый отзыв уходит на проверку и появляется
+            здесь только после одобрения) — не хватает только формы отправки на сайте,
+            добавим следующим шагом.
           </div>
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2">

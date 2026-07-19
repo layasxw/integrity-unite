@@ -1,7 +1,8 @@
 import PageHeader from "../../components/PageHeader";
 import Container from "../../components/ui/Container";
 import Button from "../../components/ui/Button";
-import { branches, links } from "../../data/mock";
+import { useApiData } from "../../hooks/useApiData";
+import { branches as branchesFallback, links } from "../../data/mock";
 
 const responsibilities = [
   "Открывает и представляет филиал Integrity Unite в своей школе, городе или регионе",
@@ -20,6 +21,8 @@ const perks = [
 ];
 
 export default function Branches() {
+  const branches = useApiData("/api/branches", branchesFallback);
+
   return (
     <div>
       <PageHeader

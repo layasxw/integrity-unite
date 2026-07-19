@@ -2,7 +2,8 @@ import PageHeader from "../components/PageHeader";
 import Container from "../components/ui/Container";
 import SectionTitle from "../components/ui/SectionTitle";
 import Button from "../components/ui/Button";
-import { team, links } from "../data/mock";
+import { useApiData } from "../hooks/useApiData";
+import { team as teamFallback, links } from "../data/mock";
 
 const volunteerPerks = [
   "Опыт работы в международной организации",
@@ -12,6 +13,8 @@ const volunteerPerks = [
 ];
 
 export default function Team() {
+  const team = useApiData("/api/team", teamFallback);
+
   return (
     <div>
       <PageHeader eyebrow="Команда" title="Команда и основатели" lead="Люди, которые стоят у истоков Integrity Unite." />

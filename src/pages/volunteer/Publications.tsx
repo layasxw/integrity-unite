@@ -1,6 +1,7 @@
 import PageHeader from "../../components/PageHeader";
 import Container from "../../components/ui/Container";
-import { publications, links } from "../../data/mock";
+import { useApiData } from "../../hooks/useApiData";
+import { publications as publicationsFallback, links } from "../../data/mock";
 
 const benefits = [
   "Портфолио для вузов и работы",
@@ -12,6 +13,8 @@ const benefits = [
 ];
 
 export default function Publications() {
+  const publications = useApiData("/api/publications", publicationsFallback);
+
   return (
     <div>
       <PageHeader

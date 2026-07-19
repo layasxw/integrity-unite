@@ -1,9 +1,8 @@
-// Мок-данные. Когда бэкенд будет готов, эти константы можно заменить
-// на fetch-запросы с тем же форматом полей — компоненты не изменятся.
-// Каждый блок помечен TODO(backend) с предполагаемым источником данных.
+// Мок-данные. Теперь используются как fallback для useApiData() —
+// показываются сразу, пока грузится реальный ответ с бэкенда (backend/),
+// и остаются рабочими, если бэкенд недоступен (см. src/hooks/useApiData.ts).
 
-// TODO(backend): статичные цифры проекта — можно захардкодить в CMS/конфиге
-// или отдавать через GET /api/stats, если планируется автообновление.
+// Отдаётся бэкендом: GET /api/stats
 export const stats = [
   { label: "Проект работает с", value: "30.01.2024" },
   { label: "Проведено потоков", value: "7" },
@@ -14,8 +13,7 @@ export const stats = [
   { label: "Менеджеров", value: "20" },
 ];
 
-// TODO(backend): список стран волонтёров — статика, но если хотите считать
-// его от реальных анкет волонтёров, нужен GET /api/volunteers/countries.
+// Отдаётся бэкендом: GET /api/volunteers/countries
 export const volunteerCountries = [
   "Казахстан",
   "Узбекистан",
@@ -40,12 +38,10 @@ export interface TeamMember {
   photo?: string;
 }
 
-// TODO(backend): основатели/команда меняются редко — можно оставить статикой
-// в коде, но если нужна админка (добавлять координаторов, менеджеров и т.д.),
-// добавить GET /api/team + CRUD для админки.
-//
-// Чтобы добавить человека: положи фото в public/images/team/<id>.jpg
-// и добавь объект { id, name, role, photo: "/images/team/<id>.jpg" } ниже.
+// Отдаётся бэкендом: GET /api/team
+// Чтобы добавить человека: положи фото в public/images/team/<id>.jpg,
+// добавь объект { id, name, role, photo: "/images/team/<id>.jpg" } ниже
+// (это fallback) и попроси бэкендера добавить то же самое в backend/app/routers/team.py.
 export const team: TeamMember[] = [
   {
     id: "diana",
@@ -65,8 +61,9 @@ export interface Club {
   description: string;
 }
 
-// TODO(backend): клубы создают сами волонтёры («основать свой клуб» в ТЗ) —
-// нужны CRUD-эндпоинты, например GET/POST /api/clubs, плюс модерация.
+// TODO(backend): пока нет эндпоинта — клубы создают сами волонтёры
+// («основать свой клуб» в ТЗ), нужны CRUD-эндпоинты, например
+// GET/POST /api/clubs, плюс модерация. Остаётся статикой до тех пор.
 export const clubs: Club[] = [
   {
     id: "debate",
@@ -95,10 +92,9 @@ export interface Publication {
   url?: string;
 }
 
-// TODO(backend): раздел "Публикации" из ТЗ — нужны форма подачи, хранение
-// (файл/текст + метаданные) и админ-панель для модерации перед публикацией.
-// Ожидаемые эндпоинты: GET /api/publications, POST /api/publications (черновик),
-// PATCH /api/publications/:id (одобрение/отклонение админом).
+// Отдаётся бэкендом: GET /api/publications (только опубликованные).
+// TODO: форма подачи новой статьи — POST /api/publications уже готов на
+// бэкенде, не хватает только формы на фронте (см. Publications.tsx).
 export const publications: Publication[] = [
   {
     id: "pub-1",
@@ -136,11 +132,9 @@ export interface Review {
   date: string;
 }
 
-// TODO(backend): раздел "Отзывы" — открытый вопрос из ТЗ: может ли отзыв
-// оставить любой посетитель сайта или только по заявке. В любом случае
-// нужна модерация перед публикацией. Ожидаемые эндпоинты:
-// GET /api/reviews (только approved), POST /api/reviews (на модерацию),
-// PATCH /api/reviews/:id (approve/reject в админке).
+// Отдаётся бэкендом: GET /api/reviews (только approved).
+// TODO: форма отправки отзыва — POST /api/reviews на бэкенде уже готов
+// (уходит в статус "pending" до модерации), не хватает формы на фронте.
 export const reviews: Review[] = [
   {
     id: "rev-1",
@@ -173,9 +167,7 @@ export interface TopVolunteer {
   description: string;
 }
 
-// TODO(backend): "Лучшие волонтёры" — по ТЗ админка добавляет имя, фото,
-// поток, награду, описание вручную. Нужны GET /api/top-volunteers и
-// админ-эндпоинты для CRUD + хранение фото (например, через S3/CDN).
+// Отдаётся бэкендом: GET /api/top-volunteers
 export const topVolunteers: TopVolunteer[] = [
   {
     id: "top-1",
@@ -200,18 +192,21 @@ export interface Branch {
   volunteers: number;
 }
 
-// TODO(backend): филиалы появляются по заявкам через branchForm ниже —
-// нужна админка, куда координатор вносит открытый филиал и его главу,
-// например GET/POST /api/branches.
+// Отдаётся бэкендом: GET /api/branches
 export const branches: Branch[] = [
   { id: "br-1", city: "Алматы", lead: "в поиске главы филиала", volunteers: 0 },
   { id: "br-2", city: "Астана", lead: "в поиске главы филиала", volunteers: 0 },
 ];
 
-// TODO(backend): расписание потоков — если даты фиксированы надолго, можно
-// оставить статикой в коде; если график часто меняется, вынести в
-// GET /api/cohorts, чтобы обновлять без деплоя фронта.
-export const cohortSchedule = [
+export interface Cohort {
+  id: string;
+  name: string;
+  period: string;
+  is_active?: boolean;
+}
+
+// Отдаётся бэкендом: GET /api/cohorts
+export const cohortSchedule: Cohort[] = [
   { id: "c1", name: "Поток 1", period: "янв 2024 — апр 2024" },
   { id: "c2", name: "Поток 2", period: "апр 2024 — июль 2024" },
   { id: "c3", name: "Поток 3", period: "июль 2024 — окт 2024" },
@@ -219,7 +214,7 @@ export const cohortSchedule = [
   { id: "c5", name: "Поток 5", period: "янв 2025 — апр 2025" },
   { id: "c6", name: "Поток 6", period: "апр 2025 — июль 2025" },
   { id: "c7", name: "Поток 7", period: "июль 2025 — окт 2025" },
-  { id: "c8", name: "Поток 8 (набор открыт)", period: "старт 10 июля" },
+  { id: "c8", name: "Поток 8 (набор открыт)", period: "старт 10 июля", is_active: true },
 ];
 
 // Настоящие рабочие ссылки на Google-формы и почту — не мок-данные,
