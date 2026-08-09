@@ -95,6 +95,12 @@ export const team: TeamMember[] = [
     photo: "/images/team/marina.jpg",
     bio: "Большая фанатка кинематографа и путешествий. Получила диплом по специальности «туризм и гостеприимство» и продолжает учиться и саморазвиваться non-stop.",
   },
+  {
+    id: "ayaulym-qc",
+    name: "Аяулым",
+    role: "Менеджер по контролю качества занятий",
+    photo: "/images/team/ayaulym.jpg",
+  },
 ];
 
 export interface Club {
@@ -198,7 +204,7 @@ export const cohortSchedule: Cohort[] = [
   { id: "c5", name: "Поток 5", period: "янв 2025 — апр 2025" },
   { id: "c6", name: "Поток 6", period: "апр 2025 — июль 2025" },
   { id: "c7", name: "Поток 7", period: "июль 2025 — окт 2025" },
-  { id: "c8", name: "Поток 8 (набор открыт)", period: "старт 10 июля", is_active: true },
+  { id: "c8", name: "Поток 8", period: "набор открыт", is_active: true },
 ];
 
 export interface Partner {

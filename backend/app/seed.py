@@ -90,19 +90,27 @@ async def seed_database(db: AsyncSession) -> None:
     # примеры с выдуманными описаниями — убраны.
 
     # 7. Cohorts
-    res = await db.execute(select(CohortModel))
-    if not res.scalars().first():
-        cohorts = [
-            CohortModel(id="c1", name="Поток 1", period="янв 2024 — апр 2024", is_active=False),
-            CohortModel(id="c2", name="Поток 2", period="апр 2024 — июль 2024", is_active=False),
-            CohortModel(id="c3", name="Поток 3", period="июль 2024 — окт 2024", is_active=False),
-            CohortModel(id="c4", name="Поток 4", period="окт 2024 — янв 2025", is_active=False),
-            CohortModel(id="c5", name="Поток 5", period="янв 2025 — апр 2025", is_active=False),
-            CohortModel(id="c6", name="Поток 6", period="апр 2025 — июль 2025", is_active=False),
-            CohortModel(id="c7", name="Поток 7", period="июль 2025 — окт 2025", is_active=False),
-            CohortModel(id="c8", name="Поток 8 (набор открыт)", period="старт 10 июля", is_active=True),
-        ]
-        db.add_all(cohorts)
+    # TODO: чтобы поправить/добавить поток — отредактируй объект ниже и задеплой.
+    # Вставляется и обновляется по id, как и команда — старые записи можно смело менять.
+    cohorts = [
+        CohortModel(id="c1", name="Поток 1", period="янв 2024 — апр 2024", is_active=False),
+        CohortModel(id="c2", name="Поток 2", period="апр 2024 — июль 2024", is_active=False),
+        CohortModel(id="c3", name="Поток 3", period="июль 2024 — окт 2024", is_active=False),
+        CohortModel(id="c4", name="Поток 4", period="окт 2024 — янв 2025", is_active=False),
+        CohortModel(id="c5", name="Поток 5", period="янв 2025 — апр 2025", is_active=False),
+        CohortModel(id="c6", name="Поток 6", period="апр 2025 — июль 2025", is_active=False),
+        CohortModel(id="c7", name="Поток 7", period="июль 2025 — окт 2025", is_active=False),
+        CohortModel(id="c8", name="Поток 8", period="набор открыт", is_active=True),
+    ]
+    for cohort in cohorts:
+        result = await db.execute(select(CohortModel).where(CohortModel.id == cohort.id))
+        existing = result.scalar_one_or_none()
+        if not existing:
+            db.add(cohort)
+        else:
+            existing.name = cohort.name
+            existing.period = cohort.period
+            existing.is_active = cohort.is_active
 
     # 8. Team Members
     # TODO: чтобы добавить/поправить человека — допиши или отредактируй объект
@@ -160,9 +168,14 @@ async def seed_database(db: AsyncSession) -> None:
             photo="/images/team/marina.jpg",
             bio="Большая фанатка кинематографа и путешествий. Получила диплом по специальности «туризм и гостеприимство» и продолжает учиться и саморазвиваться non-stop.",
         ),
-        # TODO: две Аяулым (одна без указанной должности, вторая — менеджер
-        # по контролю качества занятий), Анна, Карина, Бинара — ждём уточнения
-        # должностей/фото, см. вопрос в ответе.
+        TeamMemberModel(
+            id="ayaulym-qc",
+            name="Аяулым",
+            role="Менеджер по контролю качества занятий",
+            photo="/images/team/ayaulym.jpg",
+        ),
+        # TODO: вторая Аяулым (должность не указана), Анна, Карина, Бинара —
+        # ждём уточнения должностей/фото.
     ]
     for member in team:
         result = await db.execute(select(TeamMemberModel).where(TeamMemberModel.id == member.id))

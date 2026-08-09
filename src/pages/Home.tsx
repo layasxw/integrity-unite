@@ -63,9 +63,8 @@ export default function Home() {
 
           <div className="mt-14 max-w-md rounded-2xl border border-offwhite/10 bg-navy-light p-6">
             <p className="text-sm font-semibold uppercase tracking-wide text-mint">
-              Следующий набор волонтёров
+              Открыт набор волонтёров
             </p>
-            <p className="mt-2 text-2xl font-bold text-offwhite">10 июля</p>
             <p className="mt-4 text-sm text-offwhite/70">
               Опыт работы в международной организации, менторство, сертификаты за 20+ часов
               и борьба за титулы лучших волонтёров при 30+ часах.
