@@ -6,6 +6,7 @@ from sqlalchemy import select
 from app.schemas import PublicationCreate, PublicationRead, MessageResponse
 from app.database import get_db
 from app.models import PublicationModel
+from app.auth import require_admin
 
 router = APIRouter(prefix="/api/publications", tags=["Publications"])
 
@@ -50,8 +51,13 @@ async def submit_publication(body: PublicationCreate, db: AsyncSession = Depends
 
 
 @router.patch("/{pub_id}", response_model=PublicationRead)
-async def moderate_publication(pub_id: str, action: str, db: AsyncSession = Depends(get_db)):
-    """Admin: publish or reject an article draft."""
+async def moderate_publication(
+    pub_id: str,
+    action: str,
+    db: AsyncSession = Depends(get_db),
+    _admin: str = Depends(require_admin),
+):
+    """Admin only: publish or reject an article draft."""
     if action not in ("publish", "reject"):
         raise HTTPException(status_code=400, detail="action must be 'publish' or 'reject'")
 

@@ -8,10 +8,10 @@ from app.config import settings
 from app.schemas import AdminLoginRequest, TokenResponse
 from app.database import get_db
 from app.models import AdminModel
+from app.auth import ALGORITHM
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
 
-_ALGORITHM = "HS256"
 _TOKEN_EXPIRE_MINUTES = 60 * 8   # 8 hours
 
 
@@ -20,7 +20,7 @@ def _create_token(subject: str) -> str:
     return jwt.encode(
         {"sub": subject, "exp": expire},
         settings.SECRET_KEY,
-        algorithm=_ALGORITHM,
+        algorithm=ALGORITHM,
     )
 
 

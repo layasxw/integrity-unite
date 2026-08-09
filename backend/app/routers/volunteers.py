@@ -7,6 +7,7 @@ from sqlalchemy import select
 from app.schemas import VolunteerCreate, VolunteerRead, MessageResponse
 from app.database import get_db
 from app.models import VolunteerModel
+from app.auth import require_admin
 
 router = APIRouter(prefix="/api/volunteers", tags=["Volunteers"])
 
@@ -29,8 +30,12 @@ async def get_countries(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("", response_model=list[VolunteerRead])
-async def list_volunteers(status: Optional[str] = None, db: AsyncSession = Depends(get_db)):
-    """Admin: list all volunteer applications, optionally filtered by status."""
+async def list_volunteers(
+    status: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    _admin: str = Depends(require_admin),
+):
+    """Admin only: list all volunteer applications, optionally filtered by status."""
     query = select(VolunteerModel)
     if status:
         query = query.where(VolunteerModel.status == status)

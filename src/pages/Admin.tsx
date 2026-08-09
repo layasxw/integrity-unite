@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import PageHeader from "../components/PageHeader";
 import Container from "../components/ui/Container";
 import Button from "../components/ui/Button";
+import { fetchJson, postJson, patchJson } from "../lib/api";
 
 interface ReviewItem {
   id: string;
@@ -24,29 +25,19 @@ export default function Admin() {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending");
   const [actionMsg, setActionMsg] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoggingIn(true);
     setLoginError("");
 
     try {
-      const res = await fetch("http://localhost:8000/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        localStorage.setItem("adminToken", data.access_token);
-        setToken(data.access_token);
-        setUsername("");
-        setPassword("");
-      } else {
-        setLoginError("Неверный логин или пароль");
-      }
+      const data = await postJson<{ access_token: string }>("/api/admin/login", { username, password });
+      localStorage.setItem("adminToken", data.access_token);
+      setToken(data.access_token);
+      setUsername("");
+      setPassword("");
     } catch {
-      setLoginError("Не удалось подключиться к серверу");
+      setLoginError("Неверный логин или пароль");
     } finally {
       setLoggingIn(false);
     }
@@ -58,44 +49,31 @@ export default function Admin() {
   };
 
   const fetchReviews = async () => {
+    if (!token) return;
     setLoading(true);
     try {
-      const url =
-        filterStatus === "all"
-          ? "http://localhost:8000/api/reviews?status=all"
-          : `http://localhost:8000/api/reviews?status=${filterStatus}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setReviews(data);
-      }
+      const data = await fetchJson<ReviewItem[]>(`/api/reviews?status=${filterStatus}`, token);
+      setReviews(data);
     } catch {
-      setActionMsg("Ошибка при загрузке отзывов.");
+      setActionMsg("Ошибка при загрузке отзывов. Возможно, сессия истекла — войдите заново.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
-      fetchReviews();
-    }
+    fetchReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, filterStatus]);
 
   const handleModerate = async (reviewId: string, action: "approve" | "reject") => {
+    if (!token) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/reviews/${reviewId}?action=${action}`, {
-        method: "PATCH",
-      });
-
-      if (res.ok) {
-        setActionMsg(`Отзыв успешно ${action === "approve" ? "одобрен" : "отклонён"}.`);
-        fetchReviews();
-      } else {
-        setActionMsg("Не удалось обновить статус отзыва.");
-      }
+      await patchJson(`/api/reviews/${reviewId}?action=${action}`, token);
+      setActionMsg(`Отзыв успешно ${action === "approve" ? "одобрен" : "отклонён"}.`);
+      fetchReviews();
     } catch {
-      setActionMsg("Ошибка сети.");
+      setActionMsg("Не удалось обновить статус отзыва.");
     }
   };
 

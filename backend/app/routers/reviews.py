@@ -2,25 +2,33 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.schemas import ReviewCreate, ReviewRead, MessageResponse
 from app.database import get_db
 from app.models import ReviewModel
+from app.auth import require_admin, decode_admin_token, bearer_scheme
 
 router = APIRouter(prefix="/api/reviews", tags=["Reviews"])
 
 
 @router.get("", response_model=list[ReviewRead])
-async def list_reviews(status: Optional[str] = None, db: AsyncSession = Depends(get_db)):
+async def list_reviews(
+    status: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+):
     """
-    Public: return approved reviews by default.
-    Admin: if status='all' or status='pending', returns matching reviews.
+    Public: return approved reviews by default (no status param).
+    Admin only: status='all' or status='pending'/'rejected' requires a valid admin token.
     """
     query = select(ReviewModel)
     if status == "all":
+        decode_admin_token(credentials.credentials if credentials else None)
         query = query.order_by(ReviewModel.date.desc())
-    elif status:
+    elif status and status != "approved":
+        decode_admin_token(credentials.credentials if credentials else None)
         query = query.where(ReviewModel.status == status).order_by(ReviewModel.date.desc())
     else:
         query = query.where(ReviewModel.status == "approved").order_by(ReviewModel.date.desc())
@@ -57,8 +65,13 @@ async def submit_review(body: ReviewCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{review_id}", response_model=ReviewRead)
-async def moderate_review(review_id: str, action: str, db: AsyncSession = Depends(get_db)):
-    """Admin: approve or reject a review. action = 'approve' | 'reject'"""
+async def moderate_review(
+    review_id: str,
+    action: str,
+    db: AsyncSession = Depends(get_db),
+    _admin: str = Depends(require_admin),
+):
+    """Admin only: approve or reject a review. action = 'approve' | 'reject'"""
     if action not in ("approve", "reject"):
         raise HTTPException(status_code=400, detail="action must be 'approve' or 'reject'")
 
