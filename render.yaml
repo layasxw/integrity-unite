@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: integrity-unite-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: frankfurt
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: integrity-unite-db
+          property: connectionString
+
+databases:
+  - name: integrity-unite-db
+    databaseName: integrity_unite
+    user: integrity
+    region: frankfurt
+    plan: free

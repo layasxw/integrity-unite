@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import PageHeader from "../components/PageHeader";
 import Container from "../components/ui/Container";
 import Button from "../components/ui/Button";
+import { API_URL } from "../lib/api";
 
 interface ReviewItem {
   id: string;
@@ -30,7 +31,7 @@ export default function Admin() {
     setLoginError("");
 
     try {
-      const res = await fetch("http://localhost:8000/api/admin/login", {
+      const res = await fetch(`${API_URL}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -62,8 +63,8 @@ export default function Admin() {
     try {
       const url =
         filterStatus === "all"
-          ? "http://localhost:8000/api/reviews?status=all"
-          : `http://localhost:8000/api/reviews?status=${filterStatus}`;
+          ? `${API_URL}/api/reviews?status=all`
+          : `${API_URL}/api/reviews?status=${filterStatus}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -84,7 +85,7 @@ export default function Admin() {
 
   const handleModerate = async (reviewId: string, action: "approve" | "reject") => {
     try {
-      const res = await fetch(`http://localhost:8000/api/reviews/${reviewId}?action=${action}`, {
+      const res = await fetch(`${API_URL}/api/reviews/${reviewId}?action=${action}`, {
         method: "PATCH",
       });
 

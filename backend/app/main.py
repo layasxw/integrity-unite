@@ -28,12 +28,13 @@ from app.routers import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if settings.DATABASE_URL:
+    if settings.async_database_url:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         async with async_session() as session:
             await seed_database(session)
     yield
+
 
 
 # ─── App factory ──────────────────────────────────────────────────────────────

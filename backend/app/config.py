@@ -22,7 +22,21 @@ class Settings(BaseSettings):
 
     @property
     def origins(self) -> List[str]:
+        if self.ALLOWED_ORIGINS.strip() == "*":
+            return ["*"]
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
+
+    @property
+    def async_database_url(self) -> str:
+        url = self.DATABASE_URL.strip()
+        if not url:
+            return ""
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
 
 
 settings = Settings()
+
