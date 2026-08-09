@@ -3,6 +3,7 @@ Integrity Unite — FastAPI backend
 Entry point: uvicorn app.main:app --reload
 Docs:        http://localhost:8000/docs
 """
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +12,19 @@ from app.config import settings
 from app.schemas import HealthResponse
 from app.database import engine, Base, async_session
 from app.seed import seed_database
+
+logger = logging.getLogger("integrity_unite")
+
+
+def _warn_if_default_secrets() -> None:
+    """Репозиторий публичный — дефолтные секреты в коде всем видны.
+    Громко предупреждаем в логах хостинга, если их не сменили на проде."""
+    if settings.APP_ENV != "production":
+        return
+    if settings.SECRET_KEY == "change-me":
+        logger.warning("⚠️  SECRET_KEY не задан (используется дефолт из кода) — задайте свой в переменных окружения!")
+    if settings.ADMIN_PASSWORD == "changeme123":
+        logger.warning("⚠️  ADMIN_PASSWORD не задан (используется дефолт из кода) — задайте свой в переменных окружения!")
 
 # Routers
 from app.routers import (
@@ -28,6 +42,7 @@ from app.routers import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _warn_if_default_secrets()
     if settings.async_database_url:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)

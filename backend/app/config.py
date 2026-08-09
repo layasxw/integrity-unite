@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me"
     DEBUG: bool = True
 
+    # Пароль задаётся через переменную окружения на хостинге (Render/Railway),
+    # а не хардкодится в коде — репозиторий публичный, менять тут нельзя.
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "changeme123"
+
     ALLOWED_ORIGINS: str = "http://localhost:5175"
 
     # Database — optional until connected

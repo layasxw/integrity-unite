@@ -1,6 +1,7 @@
 import bcrypt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from app.config import settings
 from app.models import (
     AdminModel,
     StatItemModel,
@@ -14,11 +15,17 @@ from app.models import (
 
 
 async def seed_database(db: AsyncSession) -> None:
-    # 1. Admin user
-    res = await db.execute(select(AdminModel).where(AdminModel.username == "admin"))
-    if not res.scalar_one_or_none():
-        hashed = bcrypt.hashpw(b"changeme123", bcrypt.gensalt()).decode()
-        db.add(AdminModel(username="admin", hashed_password=hashed))
+    # 1. Admin user — логин/пароль берутся из ADMIN_USERNAME/ADMIN_PASSWORD
+    # (переменные окружения на хостинге). Если пароль в настройках поменяли —
+    # хэш в базе обновится при следующем старте приложения, ручного доступа
+    # к БД не требуется.
+    res = await db.execute(select(AdminModel).where(AdminModel.username == settings.ADMIN_USERNAME))
+    admin = res.scalar_one_or_none()
+    if not admin:
+        hashed = bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode()
+        db.add(AdminModel(username=settings.ADMIN_USERNAME, hashed_password=hashed))
+    elif not bcrypt.checkpw(settings.ADMIN_PASSWORD.encode(), admin.hashed_password.encode()):
+        admin.hashed_password = bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode()
 
     # 2. Stats
     res = await db.execute(select(StatItemModel))
