@@ -143,12 +143,16 @@ async def seed_database(db: AsyncSession) -> None:
         db.add_all(cohorts)
 
     # 8. Team Members
-    res = await db.execute(select(TeamMemberModel))
-    if not res.scalars().first():
-        team = [
-            TeamMemberModel(id="diana", name="Диана", role="Основательница Integrity Unite"),
-            TeamMemberModel(id="polina", name="Полина", role="Соосновательница Integrity Unite"),
-        ]
-        db.add_all(team)
+    # TODO: чтобы добавить человека — допиши объект TeamMemberModel(...) в список
+    # ниже и задеплой. Добавляется по одному (id), а не только при пустой таблице,
+    # поэтому старых участников трогать не нужно — новые просто дозаписываются.
+    team = [
+        TeamMemberModel(id="diana", name="Диана", role="Основательница Integrity Unite"),
+        TeamMemberModel(id="polina", name="Полина", role="Соосновательница Integrity Unite"),
+    ]
+    for member in team:
+        exists = await db.execute(select(TeamMemberModel).where(TeamMemberModel.id == member.id))
+        if not exists.scalar_one_or_none():
+            db.add(member)
 
     await db.commit()
