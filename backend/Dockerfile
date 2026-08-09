@@ -24,5 +24,5 @@ USER appuser
 
 EXPOSE 8000
 
-# Use 4 workers in production; adjust based on server CPU count
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 4"]
+

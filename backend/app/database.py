@@ -3,8 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 
+db_url = settings.async_database_url or "postgresql+asyncpg://integrity:changeme@localhost:5432/integrity_unite"
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=False,
     future=True,
 )
