@@ -19,6 +19,7 @@ async def list_team(db: AsyncSession = Depends(get_db)):
             name=m.name,
             role=m.role,
             photo=m.photo,
+            bio=m.bio,
         )
         for m in members
     ]

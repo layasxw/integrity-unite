@@ -101,6 +101,7 @@ class TeamMemberModel(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(255), nullable=False)
     photo: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
 class AdminModel(Base):

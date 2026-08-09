@@ -15,6 +15,34 @@ from app.models import (
 
 
 async def seed_database(db: AsyncSession) -> None:
+    # 0. Разовая чистка: изначальный сид положил примеры отзывов/публикаций/
+    # лучших волонтёров сразу со статусом approved/published — они реально
+    # показывались на сайте как настоящие. Удаляем их по конкретным id, если
+    # они всё ещё там (идемпотентно — на пустой базе просто ничего не найдёт).
+    _fake_review_ids = ["rev-1", "rev-2", "rev-3"]
+    _fake_publication_ids = ["pub-1", "pub-2"]
+    _fake_top_volunteer_ids = ["top-1", "top-2"]
+
+    for rid in _fake_review_ids:
+        res = await db.execute(select(ReviewModel).where(ReviewModel.id == rid))
+        row = res.scalar_one_or_none()
+        if row:
+            await db.delete(row)
+
+    for pid in _fake_publication_ids:
+        res = await db.execute(select(PublicationModel).where(PublicationModel.id == pid))
+        row = res.scalar_one_or_none()
+        if row:
+            await db.delete(row)
+
+    for tid in _fake_top_volunteer_ids:
+        res = await db.execute(select(TopVolunteerModel).where(TopVolunteerModel.id == tid))
+        row = res.scalar_one_or_none()
+        if row:
+            await db.delete(row)
+
+    await db.commit()
+
     # 1. Admin user — логин/пароль берутся из ADMIN_USERNAME/ADMIN_PASSWORD
     # (переменные окружения на хостинге). Если пароль в настройках поменяли —
     # хэш в базе обновится при следующем старте приложения, ручного доступа
@@ -41,61 +69,12 @@ async def seed_database(db: AsyncSession) -> None:
         ]
         db.add_all(stats)
 
-    # 3. Reviews
-    res = await db.execute(select(ReviewModel))
-    if not res.scalars().first():
-        reviews = [
-            ReviewModel(
-                id="rev-1",
-                name="Айгерим С.",
-                role="Родитель",
-                text="Сын занимается уже второй поток подряд — очень довольны отношением волонтёров и тем, что всё бесплатно.",
-                status="approved",
-                date="2026-02-01",
-            ),
-            ReviewModel(
-                id="rev-2",
-                name="Тимур К.",
-                role="Волонтёр",
-                text="Провёл здесь первые уроки в жизни и получил сертификат, который потом пригодился при поступлении.",
-                status="approved",
-                date="2025-12-15",
-            ),
-            ReviewModel(
-                id="rev-3",
-                name="Алина Ж.",
-                role="Ученик",
-                text="Мне нравится, что можно спросить что угодно и преподаватель объяснит ещё раз, не торопя.",
-                status="approved",
-                date="2025-10-22",
-            ),
-        ]
-        db.add_all(reviews)
+    # 3. Reviews — намеренно без сид-данных. Отзывы — контент от реальных
+    # людей через форму на сайте, показывать выдуманные примеры как настоящие
+    # нельзя. Таблица просто остаётся пустой, пока не появятся первые реальные.
 
-    # 4. Publications
-    res = await db.execute(select(PublicationModel))
-    if not res.scalars().first():
-        publications = [
-            PublicationModel(
-                id="pub-1",
-                title="Как организовать волонтёрский проект в своей школе",
-                author="Полина Ханчина",
-                category="Практическое руководство",
-                excerpt="Пошаговый разбор запуска локальной инициативы: от идеи и команды до первых мероприятий.",
-                status="published",
-                date="2026-03-12",
-            ),
-            PublicationModel(
-                id="pub-2",
-                title="Опыт онлайн-обучения детей из малообеспеченных семей",
-                author="Диана",
-                category="Аналитический обзор",
-                excerpt="Сравнение форматов дистанционного образования в разных странах.",
-                status="published",
-                date="2026-01-20",
-            ),
-        ]
-        db.add_all(publications)
+    # 4. Publications — то же самое: только реальные заявки через форму,
+    # никаких примеров-заглушек.
 
     # 5. Branches
     res = await db.execute(select(BranchModel))
@@ -106,26 +85,9 @@ async def seed_database(db: AsyncSession) -> None:
         ]
         db.add_all(branches)
 
-    # 6. Top Volunteers
-    res = await db.execute(select(TopVolunteerModel))
-    if not res.scalars().first():
-        top = [
-            TopVolunteerModel(
-                id="top-1",
-                name="Полина Ханчина",
-                cohort="Поток 1—7",
-                award="Best International Volunteer",
-                description="Соучредитель проекта, провела десятки уроков и менторских сессий.",
-            ),
-            TopVolunteerModel(
-                id="top-2",
-                name="Диана",
-                cohort="Поток 1—7",
-                award="Best National Volunteer",
-                description="Организатор проекта, отвечает за координацию потоков.",
-            ),
-        ]
-        db.add_all(top)
+    # 6. Top Volunteers — намеренно без сид-данных, пока команда не выберет
+    # реальных победителей по итогам потока. Раньше тут были придуманные
+    # примеры с выдуманными описаниями — убраны.
 
     # 7. Cohorts
     res = await db.execute(select(CohortModel))
@@ -143,16 +105,74 @@ async def seed_database(db: AsyncSession) -> None:
         db.add_all(cohorts)
 
     # 8. Team Members
-    # TODO: чтобы добавить человека — допиши объект TeamMemberModel(...) в список
-    # ниже и задеплой. Добавляется по одному (id), а не только при пустой таблице,
-    # поэтому старых участников трогать не нужно — новые просто дозаписываются.
+    # TODO: чтобы добавить/поправить человека — допиши или отредактируй объект
+    # ниже и задеплой. Работает и как вставка новых, и как обновление уже
+    # существующих (по id) — старых участников можно смело редактировать.
     team = [
-        TeamMemberModel(id="diana", name="Диана", role="Основательница Integrity Unite"),
+        TeamMemberModel(
+            id="diana",
+            name="Диана",
+            role="Основательница Integrity Unite",
+            photo="/images/team/diana.jpg",
+        ),
+        # Полина пока без фото — загруженный файл был в формате .DNG (RAW),
+        # браузеры такое не показывают, нужен обычный .jpg/.png.
         TeamMemberModel(id="polina", name="Полина", role="Соосновательница Integrity Unite"),
+        TeamMemberModel(
+            id="arina",
+            name="Арина",
+            role="Менеджер по данным и автоматизации",
+            photo="/images/team/arina.jpg",
+            bio="По большей части я работаю в сфере интернационального развития и EdTech. В свободное время изучаю языки и новые компетенции.",
+        ),
+        TeamMemberModel(
+            id="dariya",
+            name="Дария",
+            role="Руководитель отдела дизайна",
+            photo="/images/team/dariya.jpg",
+            bio="Специализируюсь на проектировании цифровых продуктов на стыке UX/UI-дизайна, архитектуры информации и веб-технологий (HTML/CSS/JS).",
+        ),
+        TeamMemberModel(
+            id="sofya",
+            name="Софья",
+            role="Дизайнер визуальных коммуникаций",
+            photo="/images/team/sofya.jpg",
+            bio="Специализируюсь на создании визуального контента: оформление презентаций, социальных сетей и цифровых материалов при помощи графических и дизайн-инструментов.",
+        ),
+        TeamMemberModel(
+            id="dilaram",
+            name="Диларам",
+            role="Менеджер по коммуникации в чате",
+            photo="/images/team/dilaram.jpg",
+            bio="Работаю в сфере волонтёрства уже три года.",
+        ),
+        TeamMemberModel(
+            id="zoryana",
+            name="Зоряна",
+            role="Копирайтер",
+            photo="/images/team/zoryana.jpg",
+            bio="Сфера интересов — синхронный перевод и международные отношения.",
+        ),
+        TeamMemberModel(
+            id="marina",
+            name="Марина",
+            role="Главный секретарь проекта",
+            photo="/images/team/marina.jpg",
+            bio="Большая фанатка кинематографа и путешествий. Получила диплом по специальности «туризм и гостеприимство» и продолжает учиться и саморазвиваться non-stop.",
+        ),
+        # TODO: две Аяулым (одна без указанной должности, вторая — менеджер
+        # по контролю качества занятий), Анна, Карина, Бинара — ждём уточнения
+        # должностей/фото, см. вопрос в ответе.
     ]
     for member in team:
-        exists = await db.execute(select(TeamMemberModel).where(TeamMemberModel.id == member.id))
-        if not exists.scalar_one_or_none():
+        result = await db.execute(select(TeamMemberModel).where(TeamMemberModel.id == member.id))
+        existing = result.scalar_one_or_none()
+        if not existing:
             db.add(member)
+        else:
+            existing.name = member.name
+            existing.role = member.role
+            existing.photo = member.photo
+            existing.bio = member.bio
 
     await db.commit()

@@ -27,7 +27,7 @@ export default function Team() {
             description="Integrity Unite создали и развивают волонтёры, которые сами прошли путь от идеи до международного проекта."
           />
 
-          <div className="mt-14 grid gap-6 sm:grid-cols-2">
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {team.map((member) => (
               <div key={member.id} className="rounded-2xl border border-navy/10 bg-offwhite p-8">
                 <div className="flex items-center gap-4">
@@ -47,6 +47,7 @@ export default function Team() {
                     <p className="text-sm text-navy/60">{member.role}</p>
                   </div>
                 </div>
+                {member.bio && <p className="mt-4 text-sm text-navy/70">{member.bio}</p>}
               </div>
             ))}
           </div>

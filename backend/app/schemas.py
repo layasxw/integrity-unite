@@ -122,6 +122,7 @@ class TeamMemberRead(BaseModel):
     name: str
     role: str
     photo: Optional[str] = None
+    bio: Optional[str] = None
 
 
 # ─── Admin auth ────────────────────────────────────────────────────────────────

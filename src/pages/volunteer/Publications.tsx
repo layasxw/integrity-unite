@@ -196,32 +196,38 @@ export default function Publications() {
           </div>
 
           <h2 className="mt-16 text-2xl font-extrabold tracking-tight text-navy">Опубликованные работы</h2>
-          <div className="mt-6 space-y-4">
-            {publications.map((pub) => (
-              <div key={pub.id} className="rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-mint-dark">
-                  {pub.category}
-                </p>
-                <p className="mt-1 text-lg font-bold text-navy">{pub.title}</p>
-                <p className="mt-2 text-sm text-navy/70">{pub.excerpt}</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-xs text-navy/50">
-                    {pub.author} · {new Date(pub.date).toLocaleDateString("ru-RU")}
+          {publications.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-navy/10 bg-white p-8 text-center text-sm text-navy/60">
+              Пока нет опубликованных работ — станьте первым автором!
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4">
+              {publications.map((pub) => (
+                <div key={pub.id} className="rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-mint-dark">
+                    {pub.category}
                   </p>
-                  {pub.content && (
-                    <a
-                      href={pub.content}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-semibold text-mint-dark underline"
-                    >
-                      Читать полностью →
-                    </a>
-                  )}
+                  <p className="mt-1 text-lg font-bold text-navy">{pub.title}</p>
+                  <p className="mt-2 text-sm text-navy/70">{pub.excerpt}</p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-xs text-navy/50">
+                      {pub.author} · {new Date(pub.date).toLocaleDateString("ru-RU")}
+                    </p>
+                    {pub.content && (
+                      <a
+                        href={pub.content}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-semibold text-mint-dark underline"
+                      >
+                        Читать полностью →
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Container>
       </section>
     </div>

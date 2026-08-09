@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.schemas import HealthResponse
-from app.database import engine, Base, async_session
+from app.database import engine, Base, async_session, apply_schema_patches
 from app.seed import seed_database
 
 logger = logging.getLogger("integrity_unite")
@@ -46,6 +46,7 @@ async def lifespan(app: FastAPI):
     if settings.async_database_url:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            await apply_schema_patches(conn)
         async with async_session() as session:
             await seed_database(session)
     yield

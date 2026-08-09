@@ -126,15 +126,21 @@ export default function Reviews() {
           </div>
 
           <h3 className="mb-6 text-xl font-bold text-navy">Опубликованные отзывы</h3>
-          <div className="grid gap-5 sm:grid-cols-2">
-            {reviews.map((r) => (
-              <div key={r.id} className="rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
-                <p className="text-sm font-semibold uppercase tracking-wide text-mint-dark">{r.role}</p>
-                <p className="mt-3 text-navy/80">«{r.text}»</p>
-                <p className="mt-4 text-sm font-medium text-navy">{r.name}</p>
-              </div>
-            ))}
-          </div>
+          {reviews.length === 0 ? (
+            <div className="rounded-2xl border border-navy/10 bg-white p-8 text-center text-sm text-navy/60">
+              Пока нет опубликованных отзывов — станьте первым!
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2">
+              {reviews.map((r) => (
+                <div key={r.id} className="rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-mint-dark">{r.role}</p>
+                  <p className="mt-3 text-navy/80">«{r.text}»</p>
+                  <p className="mt-4 text-sm font-medium text-navy">{r.name}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </Container>
       </section>
     </div>
