@@ -1,22 +1,24 @@
-"""
-GET /api/team   — team members
-TODO(db): SELECT * FROM team_members
-"""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.schemas import TeamMemberRead
+from app.database import get_db
+from app.models import TeamMemberModel
 
 router = APIRouter(prefix="/api/team", tags=["Team"])
 
-_store: list[TeamMemberRead] = [
-    TeamMemberRead(id="diana", name="Диана", role="Основательница Integrity Unite"),
-    TeamMemberRead(id="polina", name="Полина", role="Соосновательница Integrity Unite"),
-]
-
 
 @router.get("", response_model=list[TeamMemberRead])
-async def list_team():
-    """
-    Public: return team members.
-    TODO(db): SELECT * FROM team_members
-    """
-    return _store
+async def list_team(db: AsyncSession = Depends(get_db)):
+    """Public: return team members."""
+    result = await db.execute(select(TeamMemberModel).order_by(TeamMemberModel.id))
+    members = result.scalars().all()
+    return [
+        TeamMemberRead(
+            id=m.id,
+            name=m.name,
+            role=m.role,
+            photo=m.photo,
+        )
+        for m in members
+    ]

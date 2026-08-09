@@ -5,7 +5,9 @@ import About from "./pages/About";
 import Team from "./pages/Team";
 import Reviews from "./pages/Reviews";
 import Schedule from "./pages/Schedule";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+
 
 import HowToJoin from "./pages/volunteer/HowToJoin";
 import Clubs from "./pages/volunteer/Clubs";
@@ -31,6 +33,7 @@ function App() {
         <Route path="/team" element={<Team />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/schedule" element={<Schedule />} />
+        <Route path="/admin" element={<Admin />} />
 
         <Route path="/volunteer" element={<HowToJoin />} />
         <Route path="/volunteer/clubs" element={<Clubs />} />

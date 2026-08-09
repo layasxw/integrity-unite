@@ -3,11 +3,14 @@ Integrity Unite — FastAPI backend
 Entry point: uvicorn app.main:app --reload
 Docs:        http://localhost:8000/docs
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.schemas import HealthResponse
+from app.database import engine, Base, async_session
+from app.seed import seed_database
 
 # Routers
 from app.routers import (
@@ -22,6 +25,17 @@ from app.routers import (
     admin,
 )
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if settings.DATABASE_URL:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        async with async_session() as session:
+            await seed_database(session)
+    yield
+
+
 # ─── App factory ──────────────────────────────────────────────────────────────
 app = FastAPI(
     title=settings.APP_NAME,
@@ -33,7 +47,9 @@ app = FastAPI(
     ),
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
+
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(

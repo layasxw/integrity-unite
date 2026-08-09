@@ -1,7 +1,43 @@
 import { Link } from "react-router-dom";
 import Container from "./ui/Container";
 import { primaryLinks } from "../nav";
-import { links } from "../data/mock";
+import { links, partners, type Partner } from "../data/mock";
+
+// У логотипов партнёров фон «вшит» в картинку (серый, белый, тёмный),
+// поэтому каждый кладём в одинаковую полупрозрачную рамку — так разнородные
+// логотипы читаются одним рядом, а не набором случайных квадратов.
+const tileClass =
+  "flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-offwhite/[0.06] p-2 " +
+  "ring-1 ring-inset ring-offwhite/10 transition duration-200 sm:h-20 sm:w-20";
+
+function PartnerLogo({ partner }: { partner: Partner }) {
+  const logo = (
+    <img
+      src={partner.logo}
+      alt={partner.name}
+      loading="lazy"
+      width={64}
+      height={64}
+      className="h-full w-full rounded-xl object-cover"
+    />
+  );
+
+  return partner.url ? (
+    <a
+      href={partner.url}
+      target="_blank"
+      rel="noreferrer"
+      title={partner.name}
+      className={`${tileClass} hover:-translate-y-0.5 hover:bg-offwhite/10 hover:ring-mint/40`}
+    >
+      {logo}
+    </a>
+  ) : (
+    <div className={tileClass} title={partner.name}>
+      {logo}
+    </div>
+  );
+}
 
 export default function Footer() {
   return (
@@ -34,9 +70,28 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-offwhite/10 pt-6 text-xs">
-          © {new Date().getFullYear()} Integrity Unite. Проект работает с 30.01.2024.
+        {partners.length > 0 && (
+          <div className="mt-12 border-t border-offwhite/10 pt-10">
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-mint">
+              Партнёры
+            </p>
+            <ul className="mt-5 flex flex-wrap items-center gap-3">
+              {partners.map((partner) => (
+                <li key={partner.id}>
+                  <PartnerLogo partner={partner} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="mt-12 flex items-center justify-between border-t border-offwhite/10 pt-6 text-xs">
+          <span>© {new Date().getFullYear()} Integrity Unite. Проект работает с 30.01.2024.</span>
+          <Link to="/admin" className="hover:text-mint transition-colors">
+            Панель администратора
+          </Link>
         </div>
+
       </Container>
     </footer>
   );

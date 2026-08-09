@@ -1,34 +1,26 @@
-"""
-GET /api/top-volunteers   — featured top volunteers
-TODO(db): SELECT * FROM top_volunteers ORDER BY cohort
-"""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.schemas import TopVolunteerRead
+from app.database import get_db
+from app.models import TopVolunteerModel
 
 router = APIRouter(prefix="/api/top-volunteers", tags=["Top Volunteers"])
 
-_store: list[TopVolunteerRead] = [
-    TopVolunteerRead(
-        id="top-1",
-        name="Полина Ханчина",
-        cohort="Поток 1—7",
-        award="Best International Volunteer",
-        description="Соучредитель проекта, провела десятки уроков и менторских сессий.",
-    ),
-    TopVolunteerRead(
-        id="top-2",
-        name="Диана",
-        cohort="Поток 1—7",
-        award="Best National Volunteer",
-        description="Организатор проекта, отвечает за координацию потоков.",
-    ),
-]
-
 
 @router.get("", response_model=list[TopVolunteerRead])
-async def list_top_volunteers():
-    """
-    Public: return top volunteers list.
-    TODO(db): SELECT * FROM top_volunteers ORDER BY id
-    """
-    return _store
+async def list_top_volunteers(db: AsyncSession = Depends(get_db)):
+    """Public: return top volunteers list."""
+    result = await db.execute(select(TopVolunteerModel).order_by(TopVolunteerModel.id))
+    volunteers = result.scalars().all()
+    return [
+        TopVolunteerRead(
+            id=v.id,
+            name=v.name,
+            cohort=v.cohort,
+            award=v.award,
+            description=v.description,
+            photo_url=v.photo_url,
+        )
+        for v in volunteers
+    ]

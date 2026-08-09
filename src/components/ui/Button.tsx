@@ -14,14 +14,29 @@ export default function Button({
   children,
   variant = "primary",
   className = "",
+  onClick,
+  type = "button",
+  disabled = false,
 }: {
-  href: string;
+  href?: string;
   children: ReactNode;
   variant?: Variant;
   className?: string;
+  onClick?: () => void;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
 }) {
+  const classes = `inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors disabled:opacity-50 ${variantClasses[variant]} ${className}`;
+
+  if (!href) {
+    return (
+      <button type={type} onClick={onClick} disabled={disabled} className={classes}>
+        {children}
+      </button>
+    );
+  }
+
   const external = href.startsWith("http") || href.startsWith("mailto:");
-  const classes = `inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors ${variantClasses[variant]} ${className}`;
 
   if (external) {
     return (
@@ -37,3 +52,4 @@ export default function Button({
     </Link>
   );
 }
+

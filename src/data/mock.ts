@@ -217,6 +217,29 @@ export const cohortSchedule: Cohort[] = [
   { id: "c8", name: "Поток 8 (набор открыт)", period: "старт 10 июля", is_active: true },
 ];
 
+export interface Partner {
+  id: string;
+  /** Название организации — используется как alt и как подпись при наведении. */
+  name: string;
+  /** Путь к логотипу в public/images/partners/. Лучше квадратная картинка. */
+  logo: string;
+  /** Если указан — логотип становится ссылкой на сайт партнёра. */
+  url?: string;
+}
+
+// TODO(backend): партнёры меняются редко — пока статика. Если понадобится
+// добавлять их из админки, завести GET /api/partners + CRUD и хранение логотипов.
+//
+// Чтобы добавить партнёра: положи квадратный логотип в public/images/partners/
+// и добавь объект { id, name, logo, url } ниже.
+export const partners: Partner[] = [
+  { id: "nbfu", name: "NBFU", logo: "/images/partners/nbfu.jpg" },
+  // TODO: уточнить название и ссылку этого партнёра (логотип — синяя «a»).
+  { id: "partner-a", name: "Партнёр", logo: "/images/partners/partner-a.png" },
+  { id: "myextra", name: "myextra", logo: "/images/partners/myextra.jpg" },
+  { id: "jasa", name: "Jasa", logo: "/images/partners/jasa.jpg" },
+];
+
 // Настоящие рабочие ссылки на Google-формы и почту — не мок-данные,
 // менять не нужно, пока команда не решит перейти на свои формы с бэкендом.
 export const links = {
