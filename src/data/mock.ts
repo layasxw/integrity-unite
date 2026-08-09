@@ -89,7 +89,10 @@ export interface Publication {
   category: string;
   excerpt: string;
   date: string;
-  url?: string;
+  // Ссылка на полный текст (Google Doc с доступом «у кого есть ссылка»).
+  // На бэкенде это же поле называется `content` (см. backend/app/schemas.py) —
+  // имя совпадает специально, чтобы не трогать уже развёрнутую схему БД.
+  content?: string;
 }
 
 // Отдаётся бэкендом: GET /api/publications (только опубликованные).
