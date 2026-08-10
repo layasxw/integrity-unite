@@ -15,34 +15,6 @@ from app.models import (
 
 
 async def seed_database(db: AsyncSession) -> None:
-    # 0. Разовая чистка: изначальный сид положил примеры отзывов/публикаций/
-    # лучших волонтёров сразу со статусом approved/published — они реально
-    # показывались на сайте как настоящие. Удаляем их по конкретным id, если
-    # они всё ещё там (идемпотентно — на пустой базе просто ничего не найдёт).
-    _fake_review_ids = ["rev-1", "rev-2", "rev-3"]
-    _fake_publication_ids = ["pub-1", "pub-2"]
-    _fake_top_volunteer_ids = ["top-1", "top-2"]
-
-    for rid in _fake_review_ids:
-        res = await db.execute(select(ReviewModel).where(ReviewModel.id == rid))
-        row = res.scalar_one_or_none()
-        if row:
-            await db.delete(row)
-
-    for pid in _fake_publication_ids:
-        res = await db.execute(select(PublicationModel).where(PublicationModel.id == pid))
-        row = res.scalar_one_or_none()
-        if row:
-            await db.delete(row)
-
-    for tid in _fake_top_volunteer_ids:
-        res = await db.execute(select(TopVolunteerModel).where(TopVolunteerModel.id == tid))
-        row = res.scalar_one_or_none()
-        if row:
-            await db.delete(row)
-
-    await db.commit()
-
     # 1. Admin user — логин/пароль берутся из ADMIN_USERNAME/ADMIN_PASSWORD
     # (переменные окружения на хостинге). Если пароль в настройках поменяли —
     # хэш в базе обновится при следующем старте приложения, ручного доступа
@@ -53,7 +25,7 @@ async def seed_database(db: AsyncSession) -> None:
         hashed = bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode()
         db.add(AdminModel(username=settings.ADMIN_USERNAME, hashed_password=hashed))
     elif not bcrypt.checkpw(settings.ADMIN_PASSWORD.encode(), admin.hashed_password.encode()):
-        admin.hashed_password = bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode()
+        admin.hashed_password = bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), admin.hashed_password.encode())
 
     # 2. Stats
     res = await db.execute(select(StatItemModel))
