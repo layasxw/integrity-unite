@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from "react";
 import PageHeader from "../components/PageHeader";
 import Container from "../components/ui/Container";
 import Button from "../components/ui/Button";
-import { fetchJson, postJson, patchJson } from "../lib/api";
+import { fetchJson, postJson, patchJson, ApiError } from "../lib/api";
 
 interface ReviewItem {
   id: string;
@@ -36,8 +36,14 @@ export default function Admin() {
       setToken(data.access_token);
       setUsername("");
       setPassword("");
-    } catch {
-      setLoginError("Неверный логин или пароль");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setLoginError(err.status === 401 ? "Неверный логин или пароль" : `Ошибка сервера (${err.status})`);
+      } else {
+        setLoginError(
+          "Не удалось подключиться к серверу. Render мог «заснуть» — подождите ~30 секунд и попробуйте ещё раз.",
+        );
+      }
     } finally {
       setLoggingIn(false);
     }
@@ -54,8 +60,13 @@ export default function Admin() {
     try {
       const data = await fetchJson<ReviewItem[]>(`/api/reviews?status=${filterStatus}`, token);
       setReviews(data);
-    } catch {
-      setActionMsg("Ошибка при загрузке отзывов. Возможно, сессия истекла — войдите заново.");
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setActionMsg("Сессия истекла — войдите заново.");
+        handleLogout();
+      } else {
+        setActionMsg("Не удалось загрузить отзывы. Проверьте подключение к серверу.");
+      }
     } finally {
       setLoading(false);
     }
