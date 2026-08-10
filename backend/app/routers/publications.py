@@ -1,20 +1,38 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.schemas import PublicationCreate, PublicationRead, MessageResponse
 from app.database import get_db
 from app.models import PublicationModel
-from app.auth import require_admin
+from app.auth import require_admin, decode_admin_token, bearer_scheme
 
 router = APIRouter(prefix="/api/publications", tags=["Publications"])
 
 
 @router.get("", response_model=list[PublicationRead])
-async def list_publications(db: AsyncSession = Depends(get_db)):
-    """Public: return published articles."""
-    query = select(PublicationModel).where(PublicationModel.status == "published").order_by(PublicationModel.date.desc())
+async def list_publications(
+    status: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+):
+    """
+    Public: published articles by default (no status param).
+    Admin only: status='all'/'draft'/'rejected' requires a valid admin token.
+    """
+    query = select(PublicationModel)
+    if status == "all":
+        decode_admin_token(credentials.credentials if credentials else None)
+        query = query.order_by(PublicationModel.date.desc())
+    elif status and status != "published":
+        decode_admin_token(credentials.credentials if credentials else None)
+        query = query.where(PublicationModel.status == status).order_by(PublicationModel.date.desc())
+    else:
+        query = query.where(PublicationModel.status == "published").order_by(PublicationModel.date.desc())
+
     result = await db.execute(query)
     pubs = result.scalars().all()
     return [

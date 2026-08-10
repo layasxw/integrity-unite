@@ -13,6 +13,22 @@ interface ReviewItem {
   date: string;
 }
 
+interface PublicationItem {
+  id: string;
+  title: string;
+  author: string;
+  category: string;
+  excerpt: string;
+  content?: string;
+  status: "draft" | "published" | "rejected";
+  date: string;
+}
+
+type Tab = "reviews" | "publications";
+
+const REVIEW_FILTERS = ["pending", "approved", "rejected", "all"] as const;
+const PUBLICATION_FILTERS = ["draft", "published", "rejected", "all"] as const;
+
 export default function Admin() {
   const [token, setToken] = useState<string | null>(localStorage.getItem("adminToken"));
   const [username, setUsername] = useState("");
@@ -20,10 +36,15 @@ export default function Admin() {
   const [loginError, setLoginError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
 
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+  const [activeTab, setActiveTab] = useState<Tab>("reviews");
   const [actionMsg, setActionMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [reviewFilter, setReviewFilter] = useState<(typeof REVIEW_FILTERS)[number]>("pending");
+
+  const [publications, setPublications] = useState<PublicationItem[]>([]);
+  const [publicationFilter, setPublicationFilter] = useState<(typeof PUBLICATION_FILTERS)[number]>("draft");
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -54,30 +75,48 @@ export default function Admin() {
     setToken(null);
   };
 
+  const handleAuthError = (err: unknown, fallbackMsg: string) => {
+    if (err instanceof ApiError && err.status === 401) {
+      setActionMsg("Сессия истекла — войдите заново.");
+      handleLogout();
+    } else {
+      setActionMsg(fallbackMsg);
+    }
+  };
+
   const fetchReviews = async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const data = await fetchJson<ReviewItem[]>(`/api/reviews?status=${filterStatus}`, token);
+      const data = await fetchJson<ReviewItem[]>(`/api/reviews?status=${reviewFilter}`, token);
       setReviews(data);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        setActionMsg("Сессия истекла — войдите заново.");
-        handleLogout();
-      } else {
-        setActionMsg("Не удалось загрузить отзывы. Проверьте подключение к серверу.");
-      }
+      handleAuthError(err, "Не удалось загрузить отзывы. Проверьте подключение к серверу.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPublications = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const data = await fetchJson<PublicationItem[]>(`/api/publications?status=${publicationFilter}`, token);
+      setPublications(data);
+    } catch (err) {
+      handleAuthError(err, "Не удалось загрузить публикации. Проверьте подключение к серверу.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchReviews();
+    if (activeTab === "reviews") fetchReviews();
+    else fetchPublications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, filterStatus]);
+  }, [token, activeTab, reviewFilter, publicationFilter]);
 
-  const handleModerate = async (reviewId: string, action: "approve" | "reject") => {
+  const moderateReview = async (reviewId: string, action: "approve" | "reject") => {
     if (!token) return;
     try {
       await patchJson(`/api/reviews/${reviewId}?action=${action}`, token);
@@ -88,13 +127,24 @@ export default function Admin() {
     }
   };
 
+  const moderatePublication = async (pubId: string, action: "publish" | "reject") => {
+    if (!token) return;
+    try {
+      await patchJson(`/api/publications/${pubId}?action=${action}`, token);
+      setActionMsg(`Публикация успешно ${action === "publish" ? "опубликована" : "отклонена"}.`);
+      fetchPublications();
+    } catch {
+      setActionMsg("Не удалось обновить статус публикации.");
+    }
+  };
+
   if (!token) {
     return (
       <div>
         <PageHeader
           eyebrow="Администрирование"
           title="Вход в панель управления"
-          lead="Авторизуйтесь для доступа к модерации отзывов и управления контентом."
+          lead="Авторизуйтесь для доступа к модерации отзывов и публикаций."
         />
 
         <section className="py-16">
@@ -154,28 +204,31 @@ export default function Admin() {
     <div>
       <PageHeader
         eyebrow="Администрирование"
-        title="Модерация отзывов"
-        lead="Управление поступившими отзывами: одобрение для публикации на сайте или отклонение."
+        title="Панель управления"
+        lead="Модерация отзывов и публикаций перед появлением на сайте."
       />
 
       <section className="py-16">
         <Container>
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex gap-2 rounded-2xl bg-offwhite p-1.5 border border-navy/10">
-              {(["pending", "approved", "rejected", "all"] as const).map((st) => (
+            <div className="flex gap-2 rounded-2xl bg-navy p-1.5">
+              {(
+                [
+                  ["reviews", "Отзывы"],
+                  ["publications", "Публикации"],
+                ] as const
+              ).map(([tab, label]) => (
                 <button
-                  key={st}
-                  onClick={() => setFilterStatus(st)}
-                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
-                    filterStatus === st
-                      ? "bg-navy text-white shadow-sm"
-                      : "text-navy/70 hover:text-navy"
+                  key={tab}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    setActionMsg("");
+                  }}
+                  className={`rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
+                    activeTab === tab ? "bg-mint text-navy" : "text-offwhite/70 hover:text-offwhite"
                   }`}
                 >
-                  {st === "pending" && "На модерации"}
-                  {st === "approved" && "Одобренные"}
-                  {st === "rejected" && "Отклонённые"}
-                  {st === "all" && "Все"}
+                  {label}
                 </button>
               ))}
             </div>
@@ -194,65 +247,177 @@ export default function Admin() {
             </div>
           )}
 
-          {loading ? (
-            <div className="py-12 text-center text-navy/60">Загрузка отзывов из базы данных...</div>
-          ) : reviews.length === 0 ? (
-            <div className="rounded-2xl border border-navy/10 bg-white p-8 text-center text-navy/60">
-              Отзывов в этой категории не найдено.
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {reviews.map((r) => (
-                <div
-                  key={r.id}
-                  className="flex flex-col justify-between gap-4 rounded-2xl border border-navy/10 bg-white p-6 shadow-sm sm:flex-row sm:items-center"
-                >
-                  <div className="space-y-2 max-w-2xl">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-mint-dark">
-                        {r.role}
-                      </span>
-                      <span className="text-xs text-navy/40">• {r.date}</span>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                          r.status === "approved"
-                            ? "bg-green-100 text-green-700"
-                            : r.status === "rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {r.status === "approved" && "Одобрен"}
-                        {r.status === "rejected" && "Отклонён"}
-                        {r.status === "pending" && "Ожидает модерации"}
-                      </span>
-                    </div>
+          {activeTab === "reviews" ? (
+            <>
+              <div className="mb-6 flex gap-2 rounded-2xl border border-navy/10 bg-offwhite p-1.5">
+                {REVIEW_FILTERS.map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setReviewFilter(st)}
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                      reviewFilter === st ? "bg-navy text-white shadow-sm" : "text-navy/70 hover:text-navy"
+                    }`}
+                  >
+                    {st === "pending" && "На модерации"}
+                    {st === "approved" && "Одобренные"}
+                    {st === "rejected" && "Отклонённые"}
+                    {st === "all" && "Все"}
+                  </button>
+                ))}
+              </div>
 
-                    <p className="text-navy font-medium">«{r.text}»</p>
-                    <p className="text-xs text-navy/60">Автор: {r.name}</p>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2 sm:pt-0">
-                    {r.status !== "approved" && (
-                      <button
-                        onClick={() => handleModerate(r.id, "approve")}
-                        className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
-                      >
-                        Одобрить
-                      </button>
-                    )}
-                    {r.status !== "rejected" && (
-                      <button
-                        onClick={() => handleModerate(r.id, "reject")}
-                        className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
-                      >
-                        Отклонить
-                      </button>
-                    )}
-                  </div>
+              {loading ? (
+                <div className="py-12 text-center text-navy/60">Загрузка...</div>
+              ) : reviews.length === 0 ? (
+                <div className="rounded-2xl border border-navy/10 bg-white p-8 text-center text-navy/60">
+                  Отзывов в этой категории не найдено.
                 </div>
-              ))}
-            </div>
+              ) : (
+                <div className="grid gap-4">
+                  {reviews.map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex flex-col justify-between gap-4 rounded-2xl border border-navy/10 bg-white p-6 shadow-sm sm:flex-row sm:items-center"
+                    >
+                      <div className="max-w-2xl space-y-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-mint-dark">
+                            {r.role}
+                          </span>
+                          <span className="text-xs text-navy/40">• {r.date}</span>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                              r.status === "approved"
+                                ? "bg-green-100 text-green-700"
+                                : r.status === "rejected"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {r.status === "approved" && "Одобрен"}
+                            {r.status === "rejected" && "Отклонён"}
+                            {r.status === "pending" && "Ожидает модерации"}
+                          </span>
+                        </div>
+
+                        <p className="text-navy font-medium">«{r.text}»</p>
+                        <p className="text-xs text-navy/60">Автор: {r.name}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 sm:pt-0">
+                        {r.status !== "approved" && (
+                          <button
+                            onClick={() => moderateReview(r.id, "approve")}
+                            className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+                          >
+                            Одобрить
+                          </button>
+                        )}
+                        {r.status !== "rejected" && (
+                          <button
+                            onClick={() => moderateReview(r.id, "reject")}
+                            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+                          >
+                            Отклонить
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="mb-6 flex gap-2 rounded-2xl border border-navy/10 bg-offwhite p-1.5">
+                {PUBLICATION_FILTERS.map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setPublicationFilter(st)}
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                      publicationFilter === st ? "bg-navy text-white shadow-sm" : "text-navy/70 hover:text-navy"
+                    }`}
+                  >
+                    {st === "draft" && "На модерации"}
+                    {st === "published" && "Опубликованные"}
+                    {st === "rejected" && "Отклонённые"}
+                    {st === "all" && "Все"}
+                  </button>
+                ))}
+              </div>
+
+              {loading ? (
+                <div className="py-12 text-center text-navy/60">Загрузка...</div>
+              ) : publications.length === 0 ? (
+                <div className="rounded-2xl border border-navy/10 bg-white p-8 text-center text-navy/60">
+                  Публикаций в этой категории не найдено.
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {publications.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex flex-col justify-between gap-4 rounded-2xl border border-navy/10 bg-white p-6 shadow-sm sm:flex-row sm:items-center"
+                    >
+                      <div className="max-w-2xl space-y-2">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-mint-dark">
+                            {p.category}
+                          </span>
+                          <span className="text-xs text-navy/40">• {p.date}</span>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                              p.status === "published"
+                                ? "bg-green-100 text-green-700"
+                                : p.status === "rejected"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {p.status === "published" && "Опубликована"}
+                            {p.status === "rejected" && "Отклонена"}
+                            {p.status === "draft" && "Ожидает модерации"}
+                          </span>
+                        </div>
+
+                        <p className="text-navy font-bold">{p.title}</p>
+                        <p className="text-sm text-navy/70">{p.excerpt}</p>
+                        <p className="text-xs text-navy/60">
+                          Автор: {p.author}
+                          {p.content && (
+                            <>
+                              {" · "}
+                              <a href={p.content} target="_blank" rel="noreferrer" className="underline">
+                                открыть документ
+                              </a>
+                            </>
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 sm:pt-0">
+                        {p.status !== "published" && (
+                          <button
+                            onClick={() => moderatePublication(p.id, "publish")}
+                            className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+                          >
+                            Опубликовать
+                          </button>
+                        )}
+                        {p.status !== "rejected" && (
+                          <button
+                            onClick={() => moderatePublication(p.id, "reject")}
+                            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+                          >
+                            Отклонить
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </Container>
       </section>
