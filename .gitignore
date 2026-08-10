@@ -13,6 +13,13 @@ dist-ssr
 *.local
 .env
 
+# RAW-фото (например .DNG) не годятся для веба — jpg/png/webp only
+*.DNG
+*.dng
+*.CR2
+*.NEF
+*.ARW
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
