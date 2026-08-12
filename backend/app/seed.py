@@ -25,7 +25,8 @@ async def seed_database(db: AsyncSession) -> None:
         hashed = bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode()
         db.add(AdminModel(username=settings.ADMIN_USERNAME, hashed_password=hashed))
     elif not bcrypt.checkpw(settings.ADMIN_PASSWORD.encode(), admin.hashed_password.encode()):
-        admin.hashed_password = bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), admin.hashed_password.encode())
+        admin.hashed_password = bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode()
+
 
     # 2. Stats
     res = await db.execute(select(StatItemModel))
