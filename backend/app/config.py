@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Integrity Unite API"
     APP_VERSION: str = "1.0.0"
     SECRET_KEY: str = "change-me"
+    ADMIN_PASSWORD: str = "changeme123"
     DEBUG: bool = True
 
     # Пароль задаётся через переменную окружения на хостинге (Render/Railway),
