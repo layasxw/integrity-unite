@@ -12,8 +12,17 @@ const volunteerPerks = [
   "Менторство от кофаундера Полины по подготовке к IELTS (её балл — 8.0)",
 ];
 
+const priorityOrder: Record<string, number> = {
+  diana: 1,
+  polina: 2,
+  aya: 3,
+};
+
 export default function Team() {
-  const team = useApiData("/api/team", teamFallback);
+  const rawTeam = useApiData("/api/team", teamFallback);
+  const team = [...rawTeam].sort(
+    (a, b) => (priorityOrder[a.id] ?? 99) - (priorityOrder[b.id] ?? 99)
+  );
 
   return (
     <div>

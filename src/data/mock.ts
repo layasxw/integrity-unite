@@ -52,6 +52,13 @@ export const team: TeamMember[] = [
     id: "polina",
     name: "Полина",
     role: "Соосновательница Integrity Unite",
+    photo: "/images/team/polina.png",
+  },
+  {
+    id: "aya",
+    name: "Аяулым",
+    role: "Lead developer",
+    photo: "/images/team/aya.png",
   },
   {
     id: "arina",
@@ -100,6 +107,7 @@ export const team: TeamMember[] = [
     name: "Аяулым",
     role: "Менеджер по контролю качества занятий",
     photo: "/images/team/ayaulym.jpg",
+    bio: "Волонтёр с опытом работы в медицинских учреждениях и преподаватель английского языка с трехлетним опытом.",
   },
 ];
 
@@ -238,3 +246,37 @@ export const links = {
   publicationForm: "https://forms.gle/SeXdn1A4x6VeCRqk6",
   contactEmail: "hanchina.polina@gmail.com",
 };
+
+export interface FounderContact {
+  name: string;
+  role: string;
+  phone: string;
+  phoneRaw: string;
+  email: string;
+}
+
+export const foundersContacts: FounderContact[] = [
+  {
+    name: "Диана",
+    role: "Основательница Integrity Unite",
+    phone: "+7 705 874 52 26",
+    phoneRaw: "+77058745226",
+    email: "diannnaew@gmail.com",
+  },
+  {
+    name: "Полина",
+    role: "Соосновательница Integrity Unite",
+    phone: "+375 33 631 15 14",
+    phoneRaw: "+375336311514",
+    email: "hanchina.polina@gmail.com",
+  },
+];
+
+export const enrollmentContact = {
+  partner: "Meyir-zhan foundation",
+  representative: "Каламкас Канатовна",
+  phone: "+7 708 416 44 69",
+  phoneRaw: "+77084164469",
+  whatsappUrl: "https://wa.me/77084164469",
+};
+

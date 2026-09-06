@@ -11,8 +11,10 @@ router = APIRouter(prefix="/api/team", tags=["Team"])
 @router.get("", response_model=list[TeamMemberRead])
 async def list_team(db: AsyncSession = Depends(get_db)):
     """Public: return team members."""
-    result = await db.execute(select(TeamMemberModel).order_by(TeamMemberModel.id))
+    result = await db.execute(select(TeamMemberModel))
     members = result.scalars().all()
+    priority = {"diana": 1, "polina": 2, "aya": 3}
+    sorted_members = sorted(members, key=lambda m: (priority.get(m.id, 99), m.id))
     return [
         TeamMemberRead(
             id=m.id,
@@ -21,5 +23,5 @@ async def list_team(db: AsyncSession = Depends(get_db)):
             photo=m.photo,
             bio=m.bio,
         )
-        for m in members
+        for m in sorted_members
     ]

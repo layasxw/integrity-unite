@@ -36,11 +36,17 @@ export default function Button({
     );
   }
 
-  const external = href.startsWith("http") || href.startsWith("mailto:");
+  const external = href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:");
 
   if (external) {
+    const isSpecialProtocol = href.startsWith("mailto:") || href.startsWith("tel:");
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
+      <a
+        href={href}
+        target={isSpecialProtocol ? undefined : "_blank"}
+        rel={isSpecialProtocol ? undefined : "noopener noreferrer"}
+        className={classes}
+      >
         {children}
       </a>
     );

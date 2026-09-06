@@ -123,9 +123,18 @@ async def seed_database(db: AsyncSession) -> None:
             role="Основательница Integrity Unite",
             photo="/images/team/diana.jpg",
         ),
-        # Полина пока без фото — загруженный файл был в формате .DNG (RAW),
-        # браузеры такое не показывают, нужен обычный .jpg/.png.
-        TeamMemberModel(id="polina", name="Полина", role="Соосновательница Integrity Unite"),
+        TeamMemberModel(
+            id="polina",
+            name="Полина",
+            role="Соосновательница Integrity Unite",
+            photo="/images/team/polina.png",
+        ),
+        TeamMemberModel(
+            id="aya",
+            name="Аяулым",
+            role="Lead developer",
+            photo="/images/team/aya.png",
+        ),
         TeamMemberModel(
             id="arina",
             name="Арина",
@@ -173,6 +182,7 @@ async def seed_database(db: AsyncSession) -> None:
             name="Аяулым",
             role="Менеджер по контролю качества занятий",
             photo="/images/team/ayaulym.jpg",
+            bio="Волонтёр с опытом работы в медицинских учреждениях и преподаватель английского языка с трехлетним опытом.",
         ),
         # TODO: вторая Аяулым (должность не указана), Анна, Карина, Бинара —
         # ждём уточнения должностей/фото.
